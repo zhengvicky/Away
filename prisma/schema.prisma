@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String         @id @default(uuid())
+  email          String         @unique
+  password       String
+  name           String
+  photo_url      String
+  availabilities Availability[]
+  
+  // Friendships
+  requestedFriends Friendship[] @relation("requester")
+  receivedFriends  Friendship[] @relation("addressee")
+}
+
+model Availability {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  location   String
+  status     String      // e.g., "in_town", "out_of_town"
+  note       String?
+  startDate  DateTime
+  endDate    DateTime
+  visibility String      // "public", "friends_only", "private"
+}
+
+model Friendship {
+  id           String   @id @default(uuid())
+  requester    User     @relation("requester", fields: [requesterId], references: [id])
+  requesterId  String
+  addressee    User     @relation("addressee", fields: [addresseeId], references: [id])
+  addresseeId  String
+  status       String   // "pending", "confirmed"
+  createdAt    DateTime @default(now())
+
+  @@unique([requesterId, addresseeId])
+}

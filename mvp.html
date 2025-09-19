@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Where Is Vicky?</title>
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <style>
+    :root {
+      --chocolate-cosmos: #fb6f92;
+      --cordovan: #ff8fab;
+      --redwood: #ffb3c6;
+      --melon: #ffc2d1;
+      --apricot: #ffe5ec;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: var(--apricot);
+      color: #222;
+      display: flex;
+      height: 100vh;
+      padding: 2.5rem; /* increased global padding */
+      box-sizing: border-box;
+      gap: 2.5rem; /* more space between panels */
+    }
+
+    #calendar {
+      flex: 1;
+      padding: 2.5rem; /* more padding inside calendar */
+      border: 2px solid var(--melon);
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .right-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column; /* column layout */
+      padding: 2.5rem;
+      overflow: hidden; /* prevent panel itself from scrolling */
+      border: 2px solid var(--melon);
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .schedule-container {
+      flex: 1; /* take remaining space */
+      overflow-y: auto; /* scroll only this section */
+      margin-bottom: 2rem; /* space above checker */
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 2.5rem; /* extra space under header */
+      color: var(--chocolate-cosmos);
+    }
+
+    .schedule {
+      max-width: 600px;
+      margin: 0 auto 2.5rem;
+    }
+
+    .trip {
+      background: var(--apricot);
+      border: 2px solid var(--melon);
+      border-radius: 12px;
+      padding: 1.5rem; /* increased padding */
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .trip.active {
+      border-color: var(--redwood);
+      background: var(--melon);
+    }
+    .trip h2 {
+      margin: 0;
+      font-size: 1.3rem;
+      color: var(--cordovan);
+    }
+    .dates {
+      font-size: 1rem;
+      color: #333;
+      margin-top: 0.5rem;
+    }
+
+    .checker {
+      flex-shrink: 0; 
+      width: 80%;          /* take most of the panel width */
+      margin: 0 auto;
+      background: #fff;    /* white background for clarity */
+      padding: 2rem 2.5rem;
+      border-radius: 12px;
+      border: 2px solid var(--melon);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center; /* center children */
+      gap: 1rem;           /* spacing between elements */
+    }
+
+    .checker label {
+      font-weight: bold;
+      color: var(--chocolate-cosmos);
+      font-size: 1.2rem;
+      text-align: center;
+    }
+
+    .checker .input-row {
+      display: flex;
+      flex-direction: row;
+      gap: 0.8rem;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .checker input[type="date"] {
+      flex: 1;
+      padding: 0.8rem 1rem;
+      font-size: 1.1rem;
+      border: 1px solid var(--melon);
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+
+    .checker button {
+      padding: 0.8rem 1.5rem;
+      font-size: 1.1rem;
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      background-color: var(--redwood);
+      color: #fff;
+      transition: background 0.3s;
+    }
+
+    .checker button:hover {
+      background-color: var(--cordovan);
+    }
+
+    .result {
+      margin-top: 1rem;
+      font-size: 1.15rem;
+      font-weight: bold;
+      text-align: center;
+      color: #333;
+    }
+
+    /* Calendar overrides */
+    .fc .fc-daygrid-event {
+      background-color: var(--redwood) !important;
+      border: 1px solid var(--cordovan) !important;
+      color: #fff !important;
+      border-radius: 4px;
+      padding: 4px 6px; /* slightly larger for readability */
+    }
+    .fc .fc-toolbar-title {
+      color: var(--chocolate-cosmos);
+    }
+    .fc .fc-button-primary {
+      background: var(--cordovan);
+      border: none;
+    }
+    .fc .fc-button-primary:hover {
+      background: var(--redwood);
+    }
+  </style>
+</head>
+<body>
+  <div id="calendar"></div>
+
+  <div class="right-panel">
+    <h1>Where Is Vicky?</h1>
+  
+    <div class="schedule-container">
+      <div class="schedule" id="schedule"></div>
+    </div>
+  
+    <div class="checker">
+      <label for="dateInput">Check where I’ll be on:</label>
+      <div class="input-row">
+        <input type="date" id="dateInput">
+        <button onclick="checkLocation()">Check</button>
+      </div>
+      <p class="result" id="result"></p>
+    </div>    
+  </div>
+  
+
+  <script>
+    const trips = [
+      { start: "2025-09-08", end: "2025-09-13", location: "Seattle, WA" },
+      { start: "2025-09-13", end: "2025-09-20", location: "San Francisco, CA" },
+      { start: "2025-09-20", end: "2025-10-07", location: "Chicago, IL" },
+      { start: "2025-10-08", end: "2025-10-12", location: "Egg Harbor Township, NJ" },
+      { start: "2025-10-13", end: "2025-11-19", location: "Manhattan, NY" },
+      { start: "2025-11-20", end: "2025-11-23", location: "Sarasota, FL" },
+      { start: "2025-11-24", end: "2025-11-30", location: "Egg Harbor Township, NJ" },
+      { start: "2025-12-01", end: "2025-12-14", location: "Manhattan, NY" },
+      { start: "2025-12-15", end: "2025-12-28", location: "Egg Harbor Township, NJ" },
+      { start: "2025-12-29", end: "2025-12-29", location: "Manhattan, NY" },
+      { start: "2025-12-30", end: "2026-01-06", location: "Aruba" },
+      { start: "2026-01-06", end: "2026-01-17", location: "Manhattan, NY" }
+    ];
+
+    const today = new Date();
+    today.setHours(0,0,0,0); // ignore time
+
+    // Only show upcoming trips in the right panel
+    const upcomingTrips = trips.filter(trip => new Date(trip.end) >= today);
+
+    const scheduleDiv = document.getElementById("schedule");
+
+    // Render the list for upcoming trips
+    const tripElements = upcomingTrips.map(trip => {
+      const tripDiv = document.createElement("div");
+      tripDiv.className = "trip";
+
+      const title = document.createElement("h2");
+      title.textContent = trip.location;
+
+      const dates = document.createElement("p");
+      dates.className = "dates";
+      dates.textContent = `From ${trip.start} to ${trip.end}`;
+
+      tripDiv.appendChild(title);
+      tripDiv.appendChild(dates);
+      scheduleDiv.appendChild(tripDiv);
+
+      return tripDiv;
+    });
+
+    function checkLocation() {
+      const inputDate = document.getElementById("dateInput").value;
+      const result = document.getElementById("result");
+
+      if (!inputDate) {
+        result.textContent = "Please select a date.";
+        result.style.color = "red";
+        return;
+      }
+
+      const date = new Date(inputDate);
+      let found = false;
+
+      for (const trip of trips) {
+        const start = new Date(trip.start);
+        const end = new Date(trip.end);
+
+        if (date >= start && date <= end) {
+          result.textContent = `You will be in ${trip.location} on ${inputDate}`;
+          result.style.color = "green";
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        result.textContent = `No trip planned on ${inputDate}`;
+        result.style.color = "#555";
+      }
+    }
+
+    // Calendar shows all trips
+    document.addEventListener('DOMContentLoaded', function() {
+      const calendarEl = document.getElementById('calendar');
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        height: "100%",
+        events: trips.map((trip, index) => ({
+          id: index.toString(),
+          title: trip.location,
+          start: trip.start,
+          end: new Date(new Date(trip.end).setDate(new Date(trip.end).getDate() + 1))
+                  .toISOString().split('T')[0],
+          allDay: true,
+          backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--redwood'),
+          borderColor: getComputedStyle(document.documentElement).getPropertyValue('--cordovan')
+        })),
+        eventClick: function(info) {
+          // Highlight only upcoming trips that are visible
+          tripElements.forEach(el => el.classList.remove("active"));
+
+          // Find index in upcomingTrips
+          const upcomingIndex = upcomingTrips.findIndex(trip => trip.location === info.event.title &&
+                                                                trip.start === info.event.startStr);
+          if (upcomingIndex !== -1) {
+            tripElements[upcomingIndex].classList.add("active");
+            tripElements[upcomingIndex].scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }
+      });
+      calendar.render();
+    });
+  </script>
+</body>
+</html>
